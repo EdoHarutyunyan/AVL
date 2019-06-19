@@ -83,7 +83,7 @@ public:
 	Iterator end();
 
 	//Modifiers
-	void insert(const T& elem);
+	bool insert(const T& elem);
 	bool remove(Iterator& it);
 	void clear();
 
@@ -91,8 +91,6 @@ private:
 	//Static methods
 	static Node* copy(const Node* tree);
 	static void clear(Node*& tree);
-	static void print(const Node* tree, int indent);
-
 	static bool find(const Node* tree, const T& elem);
 
 	std::pair<Tree<T>::Node*, bool> insert(Node*& tree, const T& elem);
@@ -132,7 +130,7 @@ typename Tree<T>::Node* Tree<T>::copy(const Node* tree)
 
 	// construct copy of the root with
 	return new Node(
-		tree->m_info,
+		tree->m_data,
 		tree->m_height,
 		copy(tree->m_left), // left subtree copied
 		copy(tree->m_right)  // and right one
@@ -160,33 +158,6 @@ void Tree<T>::clear(Node*& tree)
 }
 
 template<class T>
-void Tree<T>::print(const Node* tree, const int indent)
-{
-	// if tree is empty
-	if (tree == nullptr)
-	{
-		// we are done
-		return 0;
-	}
-	// some magic margin
-	enum { margin = 5 };
-
-	// print left with some indent plus margin
-	print(tree->m_right, indent + margin);
-
-	// emulate indentation	
-	for (size_t i = 0; i < indent; ++i)
-	{
-		std::cout << ' ';
-	}
-	// print root
-	std::cout << tree->m_info << std::endl;
-
-	// print left subtree
-	print(tree->m_left, indent + margin);
-}
-
-template<class T>
 bool Tree<T>::find(const Node* tree, const T& elem)
 {
 	// if tree is empty
@@ -197,14 +168,14 @@ bool Tree<T>::find(const Node* tree, const T& elem)
 	}
 
 	// if elem is equal to root element 
-	if (tree->m_info == elem)
+	if (tree->m_data == elem)
 	{
 		// say we are lucky
 		return true;
 	}
 
 	// if elem compares less than root element
-	if (elem < tree->m_info)
+	if (elem < tree->m_data)
 	{
 		// it must be in left subtree
 		return find(tree->m_left, elem);
@@ -227,10 +198,12 @@ std::pair<typename Tree<T>::Node*, bool> Tree<T>::insert(Node*& root, const T& e
 	if (elem < root->m_data)
 	{
 		root->m_left = insert(root->m_left, elem).first;
+		root->m_left->m_parent = root;
 	}
 	else if (elem > root->m_data)
 	{
 		root->m_right = insert(root->m_right, elem).first;
+		root->m_right->m_parent = root;
 	}
 	else
 	{
@@ -426,7 +399,7 @@ void Tree<T>::PrintInorder(Node* node) const
 		postOrder(node->m_left);
 	}
 
-	std::cout << node->data << " ";
+	std::cout << node->m_data << " ";
 
 	if (node->m_right != nullptr)
 	{
@@ -437,7 +410,7 @@ void Tree<T>::PrintInorder(Node* node) const
 template<class T>
 void Tree<T>::PrintPreorder(Node* node) const
 {
-	std::cout << node->data << " ";
+	std::cout << node->m_data << " ";
 
 	if (node->m_left != nullptr)
 	{
@@ -463,7 +436,7 @@ void Tree<T>::PrintPostorder(Node* node) const
 		postOrder(node->m_right);
 	}
 
-	std::cout << node->data << " ";
+	std::cout << node->m_data << " ";
 }
 
 //______ PUBLIC METHODS __
@@ -471,7 +444,7 @@ void Tree<T>::PrintPostorder(Node* node) const
 template<class T>
 Tree<T>::Tree()
 	: m_root(nullptr)
-	, m_size(0)
+	, m_size(0u)
 {
 }
 
@@ -588,9 +561,23 @@ void Tree<T>::PrintPostorder() const
 }
 
 template<class T>
-void Tree<T>::insert(const T& elem)
+bool Tree<T>::insert(const T& elem)
 {
-	m_root = insert(m_root, elem).first;
+	if (nullptr == m_root)
+	{
+		m_root = new Node(elem);
+		++m_size;
+	}
+
+	std::pair<Tree<T>::Node*, bool> result = insert(m_root, elem);
+
+	if (result.second) 
+	{
+		m_root = result.first;
+		return true;
+	}
+
+	return false;
 }
 
 template<class T>
