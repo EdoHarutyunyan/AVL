@@ -11,6 +11,10 @@ int main()
 	tree.insert(2);
 	tree.insert(3);
 
+	auto it = tree.begin();
+
+	tree.remove(it);
+
 	system("pause");
 	return 0;
 }
